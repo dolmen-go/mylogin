@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -27,7 +26,7 @@ func main() {
 		rd = mylogin.FilterSection(rd, os.Args[2])
 	}
 
-	_, err = io.Copy(rd, os.Stdout)
+	_, err = io.Copy(os.Stdout, rd)
 	if err != nil {
 		log.Fatal(err)
 	}
