@@ -74,11 +74,11 @@ func ReadMyLogin(section string) (c *Config, err error) {
 }
 */
 
-func ReadConfig(file string, section string) (c *Config, err error) {
+func ReadConfig(file string, byteOrder binary.ByteOrder, section string) (c *Config, err error) {
 	if section == "" {
 		section = "client"
 	}
-	sections, err := ReadAll(file)
+	sections, err := ReadAll(file, byteOrder)
 	if err != nil {
 		return
 	}
@@ -91,14 +91,14 @@ func ReadConfig(file string, section string) (c *Config, err error) {
 	return
 }
 
-func ReadAll(filename string) (sections []ConfigSection, err error) {
+func ReadAll(filename string, byteOrder binary.ByteOrder) (sections []ConfigSection, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
 	}
 	defer file.Close()
 
-	rd, err := Decode(bufio.NewReader(file))
+	rd, err := Decode(bufio.NewReader(file), byteOrder)
 	if err != nil {
 		return
 	}
@@ -121,8 +121,9 @@ func ReadAll(filename string) (sections []ConfigSection, err error) {
 	return
 }
 
-// AES 128
-func Decode(in io.Reader) (io.Reader, error) {
+// Decode is a filter that returns the plaintext content of a mylogin.cnf file.
+// The file is encrypted with AES 128 with the key embeded in the file.
+func Decode(in io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
 
 	// Skip first 4 bytes
@@ -157,17 +158,15 @@ func Decode(in io.Reader) (io.Reader, error) {
 		panic(err.Error())
 	}
 
-	return &decoder{input: in, block: block}, nil
+	return &decoder{input: in, byteOrder: byteOrder, block: block}, nil
 }
 
-// FIXME use the platform byte order as default
-var ByteOrder = binary.LittleEndian
-
 type decoder struct {
-	input  io.Reader
-	block  cipher.Block
-	chunk  [4096]byte
-	buffer []byte // Slice pointing to chunk
+	input     io.Reader
+	byteOrder binary.ByteOrder
+	block     cipher.Block
+	chunk     [4096]byte
+	buffer    []byte // Slice pointing to chunk
 }
 
 func (d *decoder) Read(buf []byte) (n int, err error) {
@@ -182,7 +181,7 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 	var size int32
 	for {
 		// Read a new chunk
-		err = binary.Read(d.input, ByteOrder, &size)
+		err = binary.Read(d.input, d.byteOrder, &size)
 		if err != nil {
 			return 0, err
 		}

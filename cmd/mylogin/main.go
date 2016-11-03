@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/binary"
 	"io"
 	"log"
 	"os"
@@ -24,7 +25,7 @@ func main() {
 	}
 	defer file.Close()
 
-	rd, err := mylogin.Decode(bufio.NewReader(file))
+	rd, err := mylogin.Decode(bufio.NewReader(file), binary.LittleEndian)
 	if err != nil {
 		log.Fatal(err)
 	}
