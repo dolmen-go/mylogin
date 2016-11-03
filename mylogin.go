@@ -18,6 +18,20 @@ import (
 	"strings"
 )
 
+// DefaultFile eturns the path to the default mylogin.cnf file:
+// - Windows: %APPDATA%/MySQL/.mylogin.cnf
+// - others: ~/.mylogin.cnf
+// If environment variable MYSQL_TEST_LOGIN_FILE is set
+// that path is returned instead.
+func DefaultFile() string {
+	f := os.Getenv("MYSQL_TEST_LOGIN_FILE")
+	if len(f) != 0 {
+		return f
+	}
+	// see defaultfile.go, defaultfile_windows.go
+	return platformDefaultFile()
+}
+
 type Config struct {
 	User     string `json:"user,omitempty"`
 	Password string `json:"password,omitempty"`
