@@ -16,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
 	rd, err := mylogin.Decode(bufio.NewReader(file))
 	if err != nil {
@@ -26,7 +27,7 @@ func main() {
 		rd = mylogin.FilterSection(rd, os.Args[2])
 	}
 
-	_, err = ioutil.ReadAll(io.TeeReader(rd, os.Stdout))
+	_, err = io.Copy(rd, os.Stdout)
 	if err != nil {
 		log.Fatal(err)
 	}
