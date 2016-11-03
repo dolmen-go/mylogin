@@ -10,8 +10,15 @@ import (
 )
 
 func main() {
-	//mylogin.ReadConfig(os.Args[1], os.Args[2])
-	file, err := os.Open(os.Args[1])
+	var filename string
+
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+	} else {
+		filename = mylogin.DefaultFile()
+	}
+
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
