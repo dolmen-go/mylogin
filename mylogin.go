@@ -82,10 +82,13 @@ func ReadAll(filename string) (sections []ConfigSection, err error) {
 	if err != nil {
 		return
 	}
+	defer file.Close()
+
 	rd, err := Decode(bufio.NewReader(file))
 	if err != nil {
 		return
 	}
+
 	var config *Config
 	scanner := bufio.NewScanner(rd)
 	for scanner.Scan() {
