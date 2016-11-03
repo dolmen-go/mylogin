@@ -200,7 +200,11 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 	// last byte value gives the number of padding byte
 	// each padding byte has that value
 	padding := d.buffer[len(d.buffer)-1]
-	if padding > 0 && padding < aes.BlockSize {
+	// Note that mysql_config_editor generates up to 16 bytes of padding
+	// which is a full AES block, so 16 encrypted bytes just to be drop when
+	// reading.
+	// Is it a bug or some nasty redundancy to reveal the encryption key?
+	if padding > 0 && padding <= aes.BlockSize {
 		//log.Printf("Padding: %d\n", padding)
 		for _, c := range d.buffer[len(d.buffer)-int(padding):] {
 			if c != padding {
