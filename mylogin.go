@@ -123,8 +123,10 @@ func ReadAll(filename string, byteOrder binary.ByteOrder) (sections []ConfigSect
 
 // Decode is a filter that returns the plaintext content of a mylogin.cnf file.
 // The file is encrypted with AES 128 with the key embeded in the file.
-func Decode(in io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
+func Decode(input io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
+
+	in := bufio.NewReader(input)
 
 	// Skip first 4 bytes
 	head4 := make([]byte, 4)
@@ -143,6 +145,18 @@ func Decode(in io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
 	}
 	if n != 20 {
 		return nil, io.EOF
+	}
+
+	// Get the bytes of the size of the first chunk
+	chunkSize, err := in.Peek(4)
+	if err != nil {
+		return nil, err
+	}
+	// Assume all chunks have size < 64K
+	if chunkSize[0] == 0 && chunkSize[1] == 0 && (chunkSize[2] != 0 || chunkSize[3] != 0) {
+		byteOrder = binary.BigEndian
+	} else {
+		byteOrder = binary.LittleEndian
 	}
 
 	// Apply xor
@@ -233,6 +247,8 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 	return
 }
 
+// FilterSection reads an INI-style content and filter out any section
+// except the given one
 func FilterSection(rd io.Reader, section string) io.Reader {
 	header := make([]byte, 1, 2+len(section))
 	header[0] = '['
