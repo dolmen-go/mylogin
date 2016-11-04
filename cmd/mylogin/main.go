@@ -24,7 +24,7 @@ func main() {
 	}
 	defer file.Close()
 
-	rd, err := mylogin.Decode(bufio.NewReader(file), nativeByteOrder)
+	rd, err := mylogin.Decode(bufio.NewReader(file))
 	if err != nil {
 		log.Fatal(err)
 	}

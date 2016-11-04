@@ -74,11 +74,11 @@ func ReadMyLogin(section string) (c *Config, err error) {
 }
 */
 
-func ReadConfig(file string, byteOrder binary.ByteOrder, section string) (c *Config, err error) {
+func ReadConfig(file string, section string) (c *Config, err error) {
 	if section == "" {
 		section = "client"
 	}
-	sections, err := ReadAll(file, byteOrder)
+	sections, err := ReadAll(file)
 	if err != nil {
 		return
 	}
@@ -91,14 +91,14 @@ func ReadConfig(file string, byteOrder binary.ByteOrder, section string) (c *Con
 	return
 }
 
-func ReadAll(filename string, byteOrder binary.ByteOrder) (sections []ConfigSection, err error) {
+func ReadAll(filename string) (sections []ConfigSection, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
 	}
 	defer file.Close()
 
-	rd, err := Decode(bufio.NewReader(file), byteOrder)
+	rd, err := Decode(bufio.NewReader(file))
 	if err != nil {
 		return
 	}
@@ -123,7 +123,7 @@ func ReadAll(filename string, byteOrder binary.ByteOrder) (sections []ConfigSect
 
 // Decode is a filter that returns the plaintext content of a mylogin.cnf file.
 // The file is encrypted with AES 128 with the key embeded in the file.
-func Decode(input io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
+func Decode(input io.Reader) (io.Reader, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
 
 	in := bufio.NewReader(input)
@@ -146,12 +146,15 @@ func Decode(input io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
 	if n != 20 {
 		return nil, io.EOF
 	}
+	// log.Printf("Key: %v\n", key)
 
-	// Get the bytes of the size of the first chunk
+	// The following 4 bytes are the length of the first chunk
+	// We will use them to detect the byte order
 	chunkSize, err := in.Peek(4)
 	if err != nil {
 		return nil, err
 	}
+	var byteOrder binary.ByteOrder
 	// Assume all chunks have size < 64K
 	if chunkSize[0] == 0 && chunkSize[1] == 0 && (chunkSize[2] != 0 || chunkSize[3] != 0) {
 		byteOrder = binary.BigEndian
@@ -164,8 +167,6 @@ func Decode(input io.Reader, byteOrder binary.ByteOrder) (io.Reader, error) {
 	for i := 0; i < 20; i++ {
 		key[i%16] ^= fileKey[i]
 	}
-
-	// log.Printf("Key: %v\n", key)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
