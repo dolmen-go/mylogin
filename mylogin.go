@@ -68,7 +68,7 @@ func Parse(rd io.Reader) (sections Sections, err error) {
 		line := scanner.Text()
 		if line[0] == '[' {
 			sections = append(sections,
-				Section{Name: line[1 : len(line)-2]})
+				Section{Name: line[1 : len(line)-1]})
 			login = &sections[len(sections)-1].Login
 		} else if login != nil && line != "" {
 			if err = login.parseLine(line); err != nil {
