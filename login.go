@@ -27,6 +27,11 @@ func (l *Login) IsEmpty() bool {
 
 // DSN builds a DSN for github.com/go-sql-driver/mysql
 func (l *Login) DSN() string {
+	// Handles the case where login is nil
+	if l.IsEmpty() {
+		return ""
+	}
+
 	var b bytes.Buffer
 	if l.User != nil {
 		b.WriteString(*l.User)
@@ -52,9 +57,10 @@ func (l *Login) DSN() string {
 		b.WriteString(net.JoinHostPort(host, port))
 		b.WriteByte(')')
 	}
-	if b.Len() > 0 {
-		b.WriteByte('/')
-	}
+
+	// The separator with the database name
+	b.WriteByte('/')
+
 	return b.String()
 }
 
