@@ -45,12 +45,14 @@ type Login struct {
 	Socket   *string `json:"socket,omitempty"`
 }
 
+// IsEmpty is true if l is nil or none of the fields are set
 func (l *Login) IsEmpty() bool {
-	return l.User == nil &&
-		l.Password == nil &&
-		l.Host == nil &&
-		l.Port == nil &&
-		l.Socket == nil
+	return l == nil ||
+		(l.User == nil &&
+			l.Password == nil &&
+			l.Host == nil &&
+			l.Port == nil &&
+			l.Socket == nil)
 }
 
 // DSN builds a DSN for github.com/go-sql-driver/mysql
@@ -166,7 +168,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 			s = DefaultSection
 		}
 		l := sections.Login(s)
-		if l == nil || l.IsEmpty() {
+		if l.IsEmpty() {
 			continue
 		}
 		if login == nil {
