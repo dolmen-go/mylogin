@@ -7,15 +7,16 @@ import (
 	"strings"
 )
 
+// Login is the content of a section of mylogin.cnf.
 type Login struct {
 	User     *string `json:"user,omitempty"`
 	Password *string `json:"password,omitempty"`
-	Host     *string `json:"host,omitempty"`
-	Port     *string `json:"port,omitempty"`
-	Socket   *string `json:"socket,omitempty"`
+	Host     *string `json:"host,omitempty"`   // TCP hostname
+	Port     *string `json:"port,omitempty"`   // TCP port
+	Socket   *string `json:"socket,omitempty"` // Unix socket path
 }
 
-// IsEmpty is true if l is nil or none of the fields are set
+// IsEmpty is true if l is nil or none of the fields are set.
 func (l *Login) IsEmpty() bool {
 	return l == nil ||
 		(l.User == nil &&
@@ -26,8 +27,9 @@ func (l *Login) IsEmpty() bool {
 }
 
 // DSN builds a DSN for github.com/go-sql-driver/mysql
-// The DSN returned always has a '/' at the end
-// The DSN for an empty Login is just "/"
+//
+// The DSN returned always has a '/' at the end.
+// The DSN for an empty Login is just "/".
 func (l *Login) DSN() string {
 	// Handles the case where login is nil
 	if l.IsEmpty() {
@@ -66,7 +68,7 @@ func (l *Login) DSN() string {
 	return b.String()
 }
 
-// String returns DSN()
+// String returns DSN().
 func (l *Login) String() string {
 	return l.DSN()
 }
@@ -80,28 +82,30 @@ var unescape = strings.NewReplacer(
 	`\s`, ` `,
 ).Replace
 
-func (c *Login) parseLine(line string) error {
+func (l *Login) parseLine(line string) error {
 	s := strings.SplitN(line, " = ", 2)
 
 	s[1] = unescape(s[1])
 
 	switch s[0] {
 	case "user":
-		c.User = &s[1]
+		l.User = &s[1]
 	case "password":
-		c.Password = &s[1]
+		l.Password = &s[1]
 	case "host":
-		c.Host = &s[1]
+		l.Host = &s[1]
 	case "port":
-		c.Port = &s[1]
+		l.Port = &s[1]
 	case "socket":
-		c.Socket = &s[1]
+		l.Socket = &s[1]
 	default:
 		return fmt.Errorf("Unknown option '%s'", s[0])
 	}
 	return nil
 }
 
+// Merge merges l into login: options set in l take precedence over
+// options set in login.
 func (login *Login) Merge(l *Login) {
 	if l.User != nil {
 		login.User = l.User

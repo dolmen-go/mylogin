@@ -1,4 +1,4 @@
-// package mylogin reads ~/.mylogin.cnf created by mysql_config_editor
+// Package mylogin reads ~/.mylogin.cnf created by mysql_config_editor
 //
 // See https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html
 //
@@ -16,8 +16,11 @@ import (
 	"os"
 )
 
+// DefaultSection is the name of the section used by all MySQL client tools.
 const DefaultSection = "client"
 
+// KeySize is the size in bytes of the key used for encryption of mylogin.cnf
+// files.
 const KeySize = 20
 
 // DefaultFile returns the path to the default mylogin.cnf file:
@@ -35,7 +38,7 @@ func DefaultFile() string {
 }
 
 // ReadLogin reads a mylogin.cnf file, extracts the requested sections and
-// merges them to obtain a single Login (that may be empty)
+// merges them to obtain a single Login (that may be empty).
 func ReadLogin(filename string, sectionNames []string) (login *Login, err error) {
 	sections, err := ReadSections(filename)
 	if err != nil {
@@ -45,7 +48,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 	return
 }
 
-// ReadSections reads all Sections of a mylogin.cnf file
+// ReadSections reads all Sections of a mylogin.cnf file.
 func ReadSections(filename string) (sections Sections, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -61,6 +64,7 @@ func ReadSections(filename string) (sections Sections, err error) {
 }
 
 // Parse parses the plaintext content of a mylogin.cnf file
+// and returns the structured content.
 func Parse(rd io.Reader) (sections Sections, err error) {
 	var login *Login
 	scanner := bufio.NewScanner(rd)
@@ -79,6 +83,7 @@ func Parse(rd io.Reader) (sections Sections, err error) {
 	return
 }
 
+// File is the full structure of a mylogin.cnf file.
 type File interface {
 	Key() [KeySize]byte
 	ByteOrder() binary.ByteOrder
@@ -167,6 +172,7 @@ func Decode(input io.Reader) (File, error) {
 	return &decoder{key: key, input: in, byteOrder: byteOrder, block: block}, nil
 }
 
+// Read is the PlainText reader.
 func (d *decoder) Read(buf []byte) (n int, err error) {
 	if len(buf) == 0 {
 		return
