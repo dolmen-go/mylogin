@@ -175,7 +175,6 @@ type File interface {
 	Key() [KeyLen]byte
 	ByteOrder() binary.ByteOrder
 	PlainText() io.Reader
-	Parse() (Sections, error)
 }
 
 type decoder struct {
