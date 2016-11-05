@@ -14,6 +14,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strings"
 )
@@ -50,6 +51,39 @@ func (l *Login) IsEmpty() bool {
 		l.Host == nil &&
 		l.Port == nil &&
 		l.Socket == nil
+}
+
+// DSN builds a DSN for github.com/go-sql-driver/mysql
+func (l *Login) DSN() string {
+	var b bytes.Buffer
+	if l.User != nil {
+		b.WriteString(*l.User)
+		if l.Password != nil {
+			b.WriteByte(':')
+			b.WriteString(*l.Password)
+		}
+		b.WriteByte('@')
+	}
+	if l.Socket != nil {
+		b.WriteString("unix(")
+		b.WriteString(*l.Socket)
+		b.WriteByte(')')
+	} else if l.Host != nil || l.Port != nil {
+		var host, port string
+		if l.Host != nil {
+			host = *l.Host
+		}
+		if l.Port != nil {
+			port = *l.Port
+		}
+		b.WriteString("tcp(")
+		b.WriteString(net.JoinHostPort(host, port))
+		b.WriteByte(')')
+	}
+	if b.Len() > 0 {
+		b.WriteByte('/')
+	}
+	return b.String()
 }
 
 var unescape = strings.NewReplacer(
