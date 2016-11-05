@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-// DefaultSection is the name of the section used by all MySQL client tools.
+// DefaultSection is the name of the base section used by all MySQL client tools.
 const DefaultSection = "client"
 
 // KeySize is the size in bytes of the key used for encryption of mylogin.cnf
@@ -85,8 +85,11 @@ func Parse(rd io.Reader) (sections Sections, err error) {
 
 // File is the full structure of a mylogin.cnf file.
 type File interface {
+	// The key used for encrypting the file
 	Key() [KeySize]byte
+	// Byte ordering for saving int32 chunk sizes
 	ByteOrder() binary.ByteOrder
+	// The plaintext content of the file
 	PlainText() io.Reader
 }
 
@@ -117,7 +120,7 @@ func (d *decoder) Parse() (Sections, error) {
 }
 
 // Decode is a filter that returns the plaintext content of a mylogin.cnf file.
-// The file is encrypted with AES 128 with the key embeded in the file.
+// The file is encrypted with AES 128 CBC with the key embeded in the file.
 func Decode(input io.Reader) (File, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
 
