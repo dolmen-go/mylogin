@@ -35,7 +35,7 @@ func DefaultFile() string {
 }
 
 func ReadLogin(filename string, sectionNames []string) (login *Login, err error) {
-	sections, err := ReadAll(filename)
+	sections, err := ReadSections(filename)
 	if err != nil {
 		return
 	}
@@ -43,7 +43,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 	return
 }
 
-func ReadAll(filename string) (sections Sections, err error) {
+func ReadSections(filename string) (sections Sections, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return
