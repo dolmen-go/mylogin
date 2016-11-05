@@ -18,10 +18,14 @@ import (
 	"strings"
 )
 
-// DefaultFile eturns the path to the default mylogin.cnf file:
-// - Windows: %APPDATA%/MySQL/.mylogin.cnf
-// - others: ~/.mylogin.cnf
-// If environment variable MYSQL_TEST_LOGIN_FILE is set
+const DefaultSection = "client"
+
+const KeyLen = 20
+
+// DefaultFile returns the path to the default mylogin.cnf file:
+//   Windows: %APPDATA%/MySQL/.mylogin.cnf
+//   others: ~/.mylogin.cnf
+// If the environment variable MYSQL_TEST_LOGIN_FILE is set
 // that path is returned instead.
 func DefaultFile() string {
 	f := os.Getenv("MYSQL_TEST_LOGIN_FILE")
@@ -32,88 +36,134 @@ func DefaultFile() string {
 	return platformDefaultFile()
 }
 
-type Config struct {
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
-	Host     string `json:"host,omitempty"`
-	Port     string `json:"port,omitempty"`
-	Socket   string `json:"socket,omitempty"`
-	Warn     bool   `json:"warn"`
+type Login struct {
+	User     *string `json:"user,omitempty"`
+	Password *string `json:"password,omitempty"`
+	Host     *string `json:"host,omitempty"`
+	Port     *string `json:"port,omitempty"`
+	Socket   *string `json:"socket,omitempty"`
 }
 
-func (c *Config) parseLine(line string) error {
+func (l *Login) Empty() bool {
+	return l.User == nil &&
+		l.Password == nil &&
+		l.Host == nil &&
+		l.Port == nil &&
+		l.Socket == nil
+}
+
+var unescape = strings.NewReplacer(
+	`\b`, "\b",
+	`\t`, "\t",
+	`\n`, "\n",
+	`\r`, "\r",
+	`\\`, `\`,
+	`\s`, ` `,
+).Replace
+
+func (c *Login) parseLine(line string) error {
 	s := strings.SplitN(line, " = ", 2)
+
+	s[1] = unescape(s[1])
+
 	switch s[0] {
 	case "user":
-		c.User = s[1]
+		c.User = &s[1]
 	case "password":
-		c.Password = s[1]
+		c.Password = &s[1]
 	case "host":
-		c.Host = s[1]
+		c.Host = &s[1]
 	case "port":
-		c.Port = s[1]
+		c.Port = &s[1]
 	case "socket":
-		c.Socket = s[1]
-	case "warn":
-		c.Warn = strings.EqualFold(s[1], "TRUE")
+		c.Socket = &s[1]
 	default:
 		return fmt.Errorf("Unknown option '%s'", s[0])
 	}
 	return nil
 }
 
-type ConfigSection struct {
-	Name   string `json:"name"`
-	Config Config `json:"config"`
-}
-
-/*
-// TODO Load ~/.mylogin.cnf
-func ReadMyLogin(section string) (c *Config, err error) {
-
-}
-*/
-
-func ReadConfig(file string, section string) (c *Config, err error) {
-	if section == "" {
-		section = "client"
+func (login *Login) Merge(l *Login) {
+	if l.User != nil {
+		login.User = l.User
 	}
-	sections, err := ReadAll(file)
+	if l.Password != nil {
+		login.Password = l.Password
+	}
+	if l.Host != nil {
+		login.Host = l.Host
+	}
+	if l.Port != nil {
+		login.Port = l.Port
+	}
+	if l.Socket != nil {
+		login.Socket = l.Socket
+	}
+}
+
+type Section struct {
+	Name  string `json:"name"`
+	Login Login  `json:"login"`
+}
+
+type Sections []Section
+
+func (sections Sections) Login(section string) *Login {
+	for _, s := range sections {
+		if s.Name == section {
+			return &s.Login
+		}
+	}
+	return nil
+}
+
+func ReadLogin(filename string, sectionNames []string) (login *Login, err error) {
+	sections, err := ReadAll(filename)
 	if err != nil {
 		return
 	}
-	for _, s := range sections {
-		if s.Name == section {
-			c = &s.Config
-			break
+	for _, s := range sectionNames {
+		if s == "" {
+			s = DefaultSection
 		}
+		l := sections.Login(s)
+		if l == nil {
+			continue
+		}
+		if login == nil {
+			login = new(Login)
+		}
+		login.Merge(l)
 	}
 	return
 }
 
-func ReadAll(filename string) (sections []ConfigSection, err error) {
-	file, err := os.Open(filename)
+func ReadAll(filename string) (sections Sections, err error) {
+	f, err := os.Open(filename)
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer f.Close()
 
-	rd, err := Decode(bufio.NewReader(file))
+	file, err := Decode(bufio.NewReader(f))
 	if err != nil {
 		return
 	}
+	return Parse(file.PlainText())
+}
 
-	var config *Config
+// Parse parses the plaintext content of a mylogin.cnf file
+func Parse(rd io.Reader) (sections Sections, err error) {
+	var login *Login
 	scanner := bufio.NewScanner(rd)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line[0] == '[' {
 			sections = append(sections,
-				ConfigSection{Name: line[1 : len(line)-2]})
-			config := &sections[len(sections)-1].Config
-			config.Warn = true // default
-		} else if config != nil && line != "" {
-			if err = config.parseLine(line); err != nil {
+				Section{Name: line[1 : len(line)-2]})
+			login = &sections[len(sections)-1].Login
+		} else if login != nil && line != "" {
+			if err = login.parseLine(line); err != nil {
 				return nil, err
 			}
 		}
@@ -121,9 +171,42 @@ func ReadAll(filename string) (sections []ConfigSection, err error) {
 	return
 }
 
+type File interface {
+	Key() [KeyLen]byte
+	ByteOrder() binary.ByteOrder
+	PlainText() io.Reader
+	Parse() (Sections, error)
+}
+
+type decoder struct {
+	key       [KeyLen]byte
+	byteOrder binary.ByteOrder
+
+	input  io.Reader
+	block  cipher.Block
+	chunk  [256 * aes.BlockSize]byte
+	buffer []byte // Slice pointing to chunk
+}
+
+func (d *decoder) Key() [KeyLen]byte {
+	return d.key
+}
+
+func (d *decoder) ByteOrder() binary.ByteOrder {
+	return d.byteOrder
+}
+
+func (d *decoder) PlainText() io.Reader {
+	return d
+}
+
+func (d *decoder) Parse() (Sections, error) {
+	return Parse(d)
+}
+
 // Decode is a filter that returns the plaintext content of a mylogin.cnf file.
 // The file is encrypted with AES 128 with the key embeded in the file.
-func Decode(input io.Reader) (io.Reader, error) {
+func Decode(input io.Reader) (File, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
 
 	in := bufio.NewReader(input)
@@ -138,12 +221,12 @@ func Decode(input io.Reader) (io.Reader, error) {
 		return nil, io.EOF
 	}
 
-	fileKey := make([]byte, 20)
-	n, err = in.Read(fileKey)
+	var key [KeyLen]byte
+	n, err = in.Read(key[:])
 	if err != nil {
 		return nil, err
 	}
-	if n != 20 {
+	if n != len(key) {
 		return nil, io.EOF
 	}
 	// log.Printf("Key: %v\n", key)
@@ -162,26 +245,19 @@ func Decode(input io.Reader) (io.Reader, error) {
 		byteOrder = binary.LittleEndian
 	}
 
+	// 16 bytes key for AES-128
+	var aesKey [16]byte
 	// Apply xor
-	key := make([]byte, 16)
-	for i := 0; i < 20; i++ {
-		key[i%16] ^= fileKey[i]
+	for i := 0; i < KeyLen; i++ {
+		aesKey[i%16] ^= key[i]
 	}
 
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(aesKey[:])
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return &decoder{input: in, byteOrder: byteOrder, block: block}, nil
-}
-
-type decoder struct {
-	input     io.Reader
-	byteOrder binary.ByteOrder
-	block     cipher.Block
-	chunk     [4096]byte
-	buffer    []byte // Slice pointing to chunk
+	return &decoder{key: key, input: in, byteOrder: byteOrder, block: block}, nil
 }
 
 func (d *decoder) Read(buf []byte) (n int, err error) {
@@ -247,6 +323,13 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 	d.buffer = d.buffer[n:]
 	return
 }
+
+/*
+// TODO
+
+func Encode(io.Writer, f File) error {
+}
+*/
 
 // FilterSection reads an INI-style content and filter out any section
 // except the given one

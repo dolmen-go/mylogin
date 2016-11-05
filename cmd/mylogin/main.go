@@ -24,10 +24,11 @@ func main() {
 	}
 	defer file.Close()
 
-	rd, err := mylogin.Decode(bufio.NewReader(file))
+	f, err := mylogin.Decode(bufio.NewReader(file))
 	if err != nil {
 		log.Fatal(err)
 	}
+	rd := f.PlainText()
 
 	if len(os.Args) == 3 {
 		rd = mylogin.FilterSection(rd, os.Args[2])
