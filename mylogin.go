@@ -19,9 +19,8 @@ import (
 // DefaultSection is the name of the base section used by all MySQL client tools.
 const DefaultSection = "client"
 
-// KeySize is the size in bytes of the key used for encryption of mylogin.cnf
-// files.
-const KeySize = 20
+// Key is a key used for encryption of mylogin.cnf files.
+type Key [20]byte
 
 // DefaultFile returns the path to the default mylogin.cnf file:
 //   Windows: %APPDATA%/MySQL/.mylogin.cnf
@@ -86,7 +85,7 @@ func Parse(rd io.Reader) (sections Sections, err error) {
 // File is the full structure of a mylogin.cnf file.
 type File interface {
 	// The key used for encrypting the file
-	Key() [KeySize]byte
+	Key() Key
 	// Byte ordering for saving int32 chunk sizes
 	ByteOrder() binary.ByteOrder
 	// The plaintext content of the file
@@ -94,7 +93,7 @@ type File interface {
 }
 
 type decoder struct {
-	key       [KeySize]byte
+	key       Key
 	byteOrder binary.ByteOrder
 
 	input  io.Reader
@@ -103,7 +102,7 @@ type decoder struct {
 	buffer []byte // Slice pointing to chunk
 }
 
-func (d *decoder) Key() [KeySize]byte {
+func (d *decoder) Key() Key {
 	return d.key
 }
 
@@ -136,12 +135,12 @@ func Decode(input io.Reader) (File, error) {
 		return nil, io.EOF
 	}
 
-	var key [KeySize]byte
+	var key Key
 	n, err = in.Read(key[:])
 	if err != nil {
 		return nil, err
 	}
-	if n != len(key) {
+	if n != cap(key) {
 		return nil, io.EOF
 	}
 	// log.Printf("Key: %v\n", key)
@@ -163,7 +162,7 @@ func Decode(input io.Reader) (File, error) {
 	// 16 bytes key for AES-128
 	var aesKey [16]byte
 	// Apply xor
-	for i := 0; i < KeySize; i++ {
+	for i := range key {
 		aesKey[i%16] ^= key[i]
 	}
 
