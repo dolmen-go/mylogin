@@ -39,19 +39,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 	if err != nil {
 		return
 	}
-	for _, s := range sectionNames {
-		if s == "" {
-			s = DefaultSection
-		}
-		l := sections.Login(s)
-		if l.IsEmpty() {
-			continue
-		}
-		if login == nil {
-			login = new(Login)
-		}
-		login.Merge(l)
-	}
+	login = sections.Merge(sectionNames)
 	return
 }
 
