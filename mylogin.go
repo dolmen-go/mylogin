@@ -18,7 +18,7 @@ import (
 
 const DefaultSection = "client"
 
-const KeyLen = 20
+const KeySize = 20
 
 // DefaultFile returns the path to the default mylogin.cnf file:
 //   Windows: %APPDATA%/MySQL/.mylogin.cnf
@@ -80,13 +80,13 @@ func Parse(rd io.Reader) (sections Sections, err error) {
 }
 
 type File interface {
-	Key() [KeyLen]byte
+	Key() [KeySize]byte
 	ByteOrder() binary.ByteOrder
 	PlainText() io.Reader
 }
 
 type decoder struct {
-	key       [KeyLen]byte
+	key       [KeySize]byte
 	byteOrder binary.ByteOrder
 
 	input  io.Reader
@@ -95,7 +95,7 @@ type decoder struct {
 	buffer []byte // Slice pointing to chunk
 }
 
-func (d *decoder) Key() [KeyLen]byte {
+func (d *decoder) Key() [KeySize]byte {
 	return d.key
 }
 
@@ -128,7 +128,7 @@ func Decode(input io.Reader) (File, error) {
 		return nil, io.EOF
 	}
 
-	var key [KeyLen]byte
+	var key [KeySize]byte
 	n, err = in.Read(key[:])
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func Decode(input io.Reader) (File, error) {
 	// 16 bytes key for AES-128
 	var aesKey [16]byte
 	// Apply xor
-	for i := 0; i < KeyLen; i++ {
+	for i := 0; i < KeySize; i++ {
 		aesKey[i%16] ^= key[i]
 	}
 
