@@ -44,7 +44,7 @@ type Login struct {
 	Socket   *string `json:"socket,omitempty"`
 }
 
-func (l *Login) Empty() bool {
+func (l *Login) IsEmpty() bool {
 	return l.User == nil &&
 		l.Password == nil &&
 		l.Host == nil &&
@@ -127,7 +127,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 			s = DefaultSection
 		}
 		l := sections.Login(s)
-		if l == nil {
+		if l == nil || l.IsEmpty() {
 			continue
 		}
 		if login == nil {
