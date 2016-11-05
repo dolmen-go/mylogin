@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,6 +9,10 @@ import (
 )
 
 func main() {
+	var database string
+	flag.StringVar(&database, "database", "", "database name")
+	flag.Parse()
+
 	var sections []string
 	if len(os.Args) <= 1 {
 		sections = []string{mylogin.DefaultSection}
@@ -19,5 +24,5 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	fmt.Println(login.DSN())
+	fmt.Println(login.DSN() + database)
 }
