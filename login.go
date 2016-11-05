@@ -26,10 +26,12 @@ func (l *Login) IsEmpty() bool {
 }
 
 // DSN builds a DSN for github.com/go-sql-driver/mysql
+// The DSN returned always has a '/' at the end
+// The DSN for an empty Login is just "/"
 func (l *Login) DSN() string {
 	// Handles the case where login is nil
 	if l.IsEmpty() {
-		return ""
+		return "/"
 	}
 
 	var b bytes.Buffer
