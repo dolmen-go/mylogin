@@ -86,6 +86,11 @@ func (l *Login) DSN() string {
 	return b.String()
 }
 
+// String returns DSN()
+func (l *Login) String() string {
+	return l.DSN()
+}
+
 var unescape = strings.NewReplacer(
 	`\b`, "\b",
 	`\t`, "\t",
