@@ -34,6 +34,8 @@ func DefaultFile() string {
 	return platformDefaultFile()
 }
 
+// ReadLogin reads a mylogin.cnf file, extracts the requested sections and
+// merges them to obtain a single Login (that may be empty)
 func ReadLogin(filename string, sectionNames []string) (login *Login, err error) {
 	sections, err := ReadSections(filename)
 	if err != nil {
@@ -43,6 +45,7 @@ func ReadLogin(filename string, sectionNames []string) (login *Login, err error)
 	return
 }
 
+// ReadSections reads all Sections of a mylogin.cnf file
 func ReadSections(filename string) (sections Sections, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
