@@ -106,20 +106,20 @@ func (l *Login) parseLine(line string) error {
 
 // Merge merges l into login: options set in l take precedence over
 // options set in login.
-func (login *Login) Merge(l *Login) {
-	if l.User != nil {
-		login.User = l.User
+func (l *Login) Merge(other *Login) {
+	if other.User != nil {
+		l.User = other.User
 	}
-	if l.Password != nil {
-		login.Password = l.Password
+	if other.Password != nil {
+		l.Password = other.Password
 	}
-	if l.Host != nil {
-		login.Host = l.Host
+	if other.Host != nil {
+		l.Host = other.Host
 	}
-	if l.Port != nil {
-		login.Port = l.Port
+	if other.Port != nil {
+		l.Port = other.Port
 	}
-	if l.Socket != nil {
-		login.Socket = l.Socket
+	if other.Socket != nil {
+		l.Socket = other.Socket
 	}
 }
