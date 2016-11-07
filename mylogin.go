@@ -1,4 +1,4 @@
-// Package mylogin reads ~/.mylogin.cnf created by mysql_config_editor
+// Package mylogin reads ~/.mylogin.cnf created by mysql_config_editor.
 //
 // See https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html
 //
@@ -118,8 +118,9 @@ func (d *decoder) Parse() (Sections, error) {
 	return Parse(d)
 }
 
-// Decode is a filter that returns the plaintext content of a mylogin.cnf file.
-// The file is encrypted with AES 128 CBC with the key embeded in the file.
+// Decode is a filter that returns the plaintext content of a mylogin.cnf
+// file.
+// The file is encrypted with AES 128 CBC with the key embedded in the file.
 func Decode(input io.Reader) (File, error) {
 	// http://ocelot.ca/blog/blog/2015/05/21/decrypt-mylogin-cnf/
 
