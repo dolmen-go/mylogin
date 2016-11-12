@@ -12,6 +12,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,15 @@ const DefaultSection = "client"
 
 // Key is a key used for encryption of mylogin.cnf files.
 type Key [20]byte
+
+func (k *Key) IsZero() bool {
+	for _, c := range k {
+		if c != 0 {
+			return false
+		}
+	}
+	return true
+}
 
 // DefaultFile returns the path to the default mylogin.cnf file:
 //   Windows: %APPDATA%/MySQL/.mylogin.cnf
@@ -245,11 +255,15 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 
 // Encode writes a mylogin.cnf content encrypted
 func Encode(w io.Writer, f File) (err error) {
+	key := f.Key()
+	if key.IsZero() {
+		return errors.New("key is not initialized")
+	}
+
 	//  Header
 	if _, err = w.Write([]byte{0, 0, 0, 0}); err != nil {
 		return
 	}
-	key := f.Key()
 	if _, err = w.Write(key[:]); err != nil {
 		return
 	}
