@@ -33,17 +33,37 @@ func main() {
 		if login == nil {
 			log.Fatal("section doesn't exists")
 		}
+
+		// The login struct contains *string
+		// This is not convenient to use in templates
+		// So we remap it to a map, skipping nil values
+		m := make(map[string]interface{})
+		for _, x := range []struct {
+			key   string
+			value *string
+		}{
+			{"user", login.User},
+			{"password", login.Password},
+			{"host", login.Host},
+			{"socket", login.Socket},
+			{"port", login.Port},
+		} {
+			if x.value != nil {
+				m[x.key] = *x.value
+			}
+		}
+
 		if formatJSON {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetEscapeHTML(false)
 			enc.SetIndent("", "  ")
-			enc.Encode(login)
+			enc.Encode(m)
 		} else {
 			tmpl, err := template.New("user-template").Parse(formatTemplate)
 			if err != nil {
 				log.Fatal(err)
 			}
-			err = tmpl.Execute(os.Stdout, login)
+			err = tmpl.Execute(os.Stdout, m)
 			if err != nil {
 				log.Fatal(err)
 			}
