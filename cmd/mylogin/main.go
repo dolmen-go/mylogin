@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"io"
 	"log"
 	"os"
@@ -12,11 +13,8 @@ import (
 func main() {
 	var filename string
 
-	if len(os.Args) > 1 {
-		filename = os.Args[1]
-	} else {
-		filename = mylogin.DefaultFile()
-	}
+	flag.StringVar(&filename, "file", mylogin.DefaultFile(), "mylogin.cnf path")
+	flag.Parse()
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -30,8 +28,8 @@ func main() {
 	}
 	rd := f.PlainText()
 
-	if len(os.Args) == 3 {
-		rd = mylogin.FilterSection(rd, os.Args[2])
+	if flag.NArg() > 0 {
+		rd = mylogin.FilterSection(rd, flag.Arg(0))
 	}
 
 	_, err = io.Copy(os.Stdout, rd)
