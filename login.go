@@ -56,6 +56,8 @@ func (l *Login) DSN() string {
 		}
 		if l.Port != nil {
 			port = *l.Port
+		} else {
+			port = "3306" // MySQL default port
 		}
 		b.WriteString("tcp(")
 		b.WriteString(net.JoinHostPort(host, port))
