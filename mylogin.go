@@ -24,20 +24,15 @@ const DefaultSection = "client"
 // Key is a key used for encryption of mylogin.cnf files.
 type Key [20]byte
 
-func (k *Key) IsZero() bool {
-	for _, c := range k {
-		if c != 0 {
-			return false
-		}
-	}
-	return true
+func (k Key) IsZero() bool {
+	return k[0] == 0 && k == Key{}
 }
 
 func (k *Key) cipher() cipher.Block {
 	// 16 bytes key for AES-128
 	var aesKey [16]byte
 	// Apply xor
-	for i := range k {
+	for i := 0; i < len(k); i++ {
 		aesKey[i%16] ^= k[i]
 	}
 
