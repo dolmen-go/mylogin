@@ -3,3 +3,8 @@ language: go
 go:
 - 1.8
 - tip
+addons:
+  apt:
+    packages:
+    # For mysql_config_editor
+    - mysql-client
