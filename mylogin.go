@@ -44,6 +44,25 @@ func (k *Key) cipher() cipher.Block {
 	return block
 }
 
+// NewKey creates a new key from a source of random bytes.
+// See math/rand.Read() and crypto/rand.Read() as possible sources.
+//
+// The generated key has the 3 high bits cleared so each byte is non-printable.
+func NewKey(readRandom func([]byte) (int, error)) (Key, error) {
+	var key Key
+	// FIXME We will finally use only 5 bits of each byte.
+	//       We should take much less bytes and spread them.
+	_, err := readRandom(key[:])
+	if err != nil {
+		return Key{}, nil
+	}
+	for i := range key {
+		// Clear the high bits
+		key[i] = key[i] & 0x1F
+	}
+	return key, nil
+}
+
 // DefaultFile returns the path to the default mylogin.cnf file:
 //   Windows: %APPDATA%/MySQL/.mylogin.cnf
 //   others: ~/.mylogin.cnf
