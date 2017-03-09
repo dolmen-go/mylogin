@@ -11,4 +11,4 @@ addons:
   apt:
     packages:
     # For mysql_config_editor
-    - mysql-client
+    - mysql-client-5.6
