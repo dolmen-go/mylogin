@@ -3,6 +3,10 @@ language: go
 go:
 - 1.8
 - tip
+# Require trusty because the older environment (Ubuntu precise) has only
+# mysql 5.5 which lacks mysql_config_editor
+dist: trusty
+sudo: false
 addons:
   apt:
     packages:
