@@ -65,7 +65,7 @@ func TestReadWrite(t *testing.T) {
 		t.Logf(path)
 		f, err := os.Open(path)
 		if err != nil {
-			t.Errorf("%s: %s", err)
+			t.Errorf("%s: %s", path, err)
 			continue
 		}
 		func() {
