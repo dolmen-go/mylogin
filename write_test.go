@@ -86,7 +86,7 @@ func TestReadWrite(t *testing.T) {
 				return
 			}
 			outBytes := out.Bytes()
-			if bytes.Compare(origBytes, outBytes) == 0 {
+			if bytes.Equal(origBytes, outBytes) {
 				t.Logf("%s: OK", path)
 				return
 			}
