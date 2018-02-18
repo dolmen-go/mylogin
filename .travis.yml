@@ -1,8 +1,10 @@
 ---
 language: go
 go:
-- 1.8
-- tip
+- "tip"
+- "1.10"
+- "1.9"
+- "1.8"
 # Require trusty because the older environment (Ubuntu precise) has only
 # mysql 5.5 which lacks mysql_config_editor
 dist: trusty
