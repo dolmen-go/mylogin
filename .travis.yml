@@ -15,6 +15,11 @@ addons:
     # For mysql_config_editor
     - mysql-client-5.6
 
+go_import_path: github.com/dolmen-go/mylogin 
+
+before_install:
+- go list
+
 script:
 - go test -coverprofile=coverage.txt -covermode=atomic
 
