@@ -1,4 +1,4 @@
-# mylogin - Go utilities for reading MySQL credentials from ~/.mylogin.cnf
+# mylogin - Go utilities for reading MySQL credentials from `~/.mylogin.cnf`
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/dolmen-go/mylogin)
 [![Travis-CI](https://img.shields.io/travis/dolmen-go/mylogin.svg)](https://travis-ci.org/dolmen-go/mylogin)
@@ -11,7 +11,7 @@ About `mylogin.cnf`:
 
 ## Go package
 
-[github.com/dolmen-go/mylogin](https://godoc.org/github.com/dolmen-go/mylogin) Library for reading and writing ~/.mylogin.cnf.
+[`github.com/dolmen-go/mylogin`](https://godoc.org/github.com/dolmen-go/mylogin) Library for reading and writing `~/.mylogin.cnf`.
 
 
 ## Utilities
@@ -23,7 +23,7 @@ go get -u github.com/dolmen-go/cmd/mylogin
 mylogin -h
 ```
 
-### [`mylogin-dsn`](https://godoc.org/github.com/dolmen-go/mylogin/cmd/mylogin-dsn): dump a mylogin.cnf section as a go-sql-driver/mysql connection string
+### [`mylogin-dsn`](https://godoc.org/github.com/dolmen-go/mylogin/cmd/mylogin-dsn): dump a `mylogin.cnf` section as a [`go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) connection string prefix
 
 ```sh
 go get -u github.com/dolmen-go/cmd/mylogin-dsn
