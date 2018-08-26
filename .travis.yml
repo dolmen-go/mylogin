@@ -1,10 +1,14 @@
 ---
 language: go
 go:
-- "tip"
-- "1.10"
-- "1.9"
-- "1.8"
+- tip
+- 1.11.x
+- 1.10.x
+- 1.9.x
+- 1.8.x
+env:
+  global:
+  - GO111MODULE=on
 # Require trusty because the older environment (Ubuntu precise) has only
 # mysql 5.5 which lacks mysql_config_editor
 dist: trusty
@@ -18,7 +22,14 @@ addons:
 go_import_path: github.com/dolmen-go/mylogin 
 
 before_install:
-- go list
+# Show package path
+- GO111MODULE=off go list
+
+install:
+# Fetch dependencies:
+# - go < 1.11:  go get -t -v ./...
+# - go >= 1.11: go list -test -mod=readonly
+- "case \"$(go version)\" in (*' go1.'[02-9]*|*' go1.10.'*) go get -t -v ./... ;; (*) go list -test -mod=readonly ;; esac"
 
 script:
 - go test -coverprofile=coverage.txt -covermode=atomic
