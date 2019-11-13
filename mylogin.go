@@ -1,9 +1,11 @@
-// Package mylogin reads ~/.mylogin.cnf created by mysql_config_editor.
+// Package mylogin reads and writes ~/.mylogin.cnf created by mysql_config_editor.
 //
 // See https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html
 //
 // Example:
 //   mysql_config_editor set --login-path=foo --user=bar -p
+//
+// For usage examples, see the utilies in the same repo.
 package mylogin
 
 import (
