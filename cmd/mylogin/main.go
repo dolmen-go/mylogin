@@ -1,3 +1,5 @@
+// Command mylogin allows to dump the content of ~/.my.cnf.
+
 package main
 
 import (
