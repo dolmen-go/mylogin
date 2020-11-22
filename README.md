@@ -1,6 +1,6 @@
 # mylogin - Go utilities for reading MySQL credentials from `~/.mylogin.cnf`
 
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/dolmen-go/mylogin)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/dolmen-go/mylogin)
 [![Travis-CI](https://api.travis-ci.org/dolmen-go/mylogin.svg?branch=master)](https://travis-ci.org/dolmen-go/mylogin)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dolmen-go/mylogin)](https://goreportcard.com/report/github.com/dolmen-go/mylogin)
 
@@ -11,19 +11,19 @@ About `mylogin.cnf`:
 
 ## Go package
 
-[`github.com/dolmen-go/mylogin`](https://godoc.org/github.com/dolmen-go/mylogin) Library for reading and writing `~/.mylogin.cnf`.
+[`github.com/dolmen-go/mylogin`](https://pkg.go.dev/github.com/dolmen-go/mylogin) Library for reading and writing `~/.mylogin.cnf`.
 
 
 ## Utilities
 
-### [`mylogin`](https://godoc.org/github.com/dolmen-go/mylogin/cmd/mylogin): dump `~/.mylogin.cnf` content in clear
+### [`mylogin`](https://pkg.go.dev/github.com/dolmen-go/mylogin/cmd/mylogin): dump `~/.mylogin.cnf` content in clear
 
 ```sh
 go get -u github.com/dolmen-go/cmd/mylogin
 mylogin -h
 ```
 
-### [`mylogin-dsn`](https://godoc.org/github.com/dolmen-go/mylogin/cmd/mylogin-dsn): dump a `mylogin.cnf` section as a [`go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) connection string prefix
+### [`mylogin-dsn`](https://pkg.go.dev/github.com/dolmen-go/mylogin/cmd/mylogin-dsn): dump a `mylogin.cnf` section as a [`go-sql-driver/mysql`](https://github.com/go-sql-driver/mysql) connection string prefix
 
 ```sh
 go get -u github.com/dolmen-go/cmd/mylogin-dsn
@@ -32,8 +32,8 @@ mylogin-dsn -h
 
 ## See also
 
-Package [`github.com/dolmen-go/mylogin-driver/register`](https://godoc.org/github.com/dolmen-go/mylogin-driver/register)
-wraps [`github.com/go-sql-driver/mysql`](https://godoc.org/github.com/go-sql-driver/mysql)
+Package [`github.com/dolmen-go/mylogin-driver/register`](https://pkg.go.dev/github.com/dolmen-go/mylogin-driver/register)
+wraps [`github.com/go-sql-driver/mysql`](https://pkg.go.dev/github.com/go-sql-driver/mysql)
 with an alternate connection string syntax that allows to refers to a `~/.mylogin.cnf` section.
 
 ## License
