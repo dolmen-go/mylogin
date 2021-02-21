@@ -13,15 +13,15 @@ go:
 env:
   global:
   - GO111MODULE=on
-# Require trusty because the older environment (Ubuntu precise) has only
-# mysql 5.5 which lacks mysql_config_editor
-dist: trusty
+
+dist: bionic
 sudo: false
 addons:
   apt:
     packages:
     # For mysql_config_editor
-    - mysql-client-5.6
+    # On trusty: mysql-client-5.6
+    - mysql-client
 
 go_import_path: github.com/dolmen-go/mylogin 
 
