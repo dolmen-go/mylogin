@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -88,6 +89,7 @@ func (l *Login) parseLine(line string) error {
 	s := strings.SplitN(line, " = ", 2)
 
 	s[1] = unescape(s[1])
+	s[1], _ = strconv.Unquote(s[1])
 
 	switch s[0] {
 	case "user":
