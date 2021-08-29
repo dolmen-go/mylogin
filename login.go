@@ -84,22 +84,41 @@ var unescape = strings.NewReplacer(
 	`\s`, ` `,
 ).Replace
 
+var unquote = strings.NewReplacer(
+	`\"`, `"`,
+	`\\`, `\`,
+).Replace
+
 func (l *Login) parseLine(line string) error {
+	// Reference code:
+	// https://github.com/mysql/mysql-shell/blob/master/mysql-secret-store/login-path/login_path_helper.cc#L52
+
 	s := strings.SplitN(line, " = ", 2)
 
-	s[1] = unescape(s[1])
+	v := s[1]
+
+	// mysql_config_editor quotes strings since 8.0.24
+	// https://github.com/mysql/mysql-server/commit/7d8028ac99730d4ccbe42d6edc11cc4f6d0cddca#diff-f8995fe51ada555169245803572ae5bd33a1793f6c027a39f8475c9156068ee5L518
+	// shcore::unquote_string: https://github.com/mysql/mysql-shell/blob/master/mysqlshdk/libs/utils/utils_string.cc#L225
+	if len(v) >= 2 && v[0] == '"' && v[len(v)-1] == '"' {
+		v = unquote(v[1 : len(v)-1])
+	} else {
+		v = strings.ReplaceAll(v, `\\`, `\`)
+	}
+
+	v = unescape(v)
 
 	switch s[0] {
 	case "user":
-		l.User = &s[1]
+		l.User = &v
 	case "password":
-		l.Password = &s[1]
+		l.Password = &v
 	case "host":
-		l.Host = &s[1]
+		l.Host = &v
 	case "port":
-		l.Port = &s[1]
+		l.Port = &v
 	case "socket":
-		l.Socket = &s[1]
+		l.Socket = &v
 	default:
 		return fmt.Errorf("Unknown option '%s'", s[0])
 	}

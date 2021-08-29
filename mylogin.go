@@ -108,6 +108,7 @@ func ReadSections(filename string) (sections Sections, err error) {
 // Parse parses the plaintext content of a mylogin.cnf file
 // and returns the structured content.
 func Parse(rd io.Reader) (sections Sections, err error) {
+	// Reference code: https://github.com/mysql/mysql-shell/blob/master/mysql-secret-store/login-path/login_path_helper.cc#L52
 	var login *Login
 	scanner := bufio.NewScanner(rd)
 	for scanner.Scan() {
