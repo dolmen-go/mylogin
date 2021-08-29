@@ -14,7 +14,7 @@ env:
   global:
   - GO111MODULE=on
 
-dist: bionic
+dist: focal
 sudo: false
 addons:
   apt:
