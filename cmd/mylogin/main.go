@@ -169,7 +169,9 @@ func (f *formatTemplate) Get() interface{} {
 }
 
 func (f *formatTemplate) Print(w io.Writer, section *mylogin.Section) error {
-	err := f.tmpl.Execute(os.Stdout, loginAsMap(&section.Login))
+	m := loginAsMap(&section.Login)
+	m["section"] = section.Name
+	err := f.tmpl.Execute(os.Stdout, m)
 	if err != nil {
 		return err
 	}
