@@ -218,20 +218,35 @@ func main() {
 
 	if selectedFormat != nil {
 
-		if flag.NArg() == 0 {
-			log.Fatal("missing section name")
-		}
-		login, err := mylogin.ReadLogin(filename, []string{flag.Arg(0)})
-		if err != nil {
-			log.Fatal(err)
-		}
-		if login == nil {
-			log.Fatal("section doesn't exists")
-		}
+		if flag.NArg() != 0 {
 
-		err = selectedFormat.Print(os.Stdout, login)
-		if err != nil {
-			log.Fatal(err)
+			for _, arg := range flag.Args() {
+				login, err := mylogin.ReadLogin(filename, []string{arg})
+				if err != nil {
+					log.Fatal(err)
+				}
+				if login == nil {
+					log.Fatal("section doesn't exists")
+				}
+
+				err = selectedFormat.Print(os.Stdout, login)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		} else {
+			sections, err := mylogin.ReadSections(filename)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for _, login := range sections {
+				err = selectedFormat.Print(os.Stdout, &login.Login)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
 		}
 
 	} else {
