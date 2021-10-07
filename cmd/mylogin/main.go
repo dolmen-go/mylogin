@@ -142,7 +142,7 @@ type formatTemplate struct {
 }
 
 func (formatTemplate) Help() (string, string) {
-	return "template", "text/template format"
+	return "template", "text/template format (additional function: 'json')"
 }
 
 func (f *formatTemplate) String() string {
@@ -153,7 +153,17 @@ func (f *formatTemplate) String() string {
 }
 
 func (f *formatTemplate) Set(s string) error {
-	tmpl, err := template.New("user-template").Parse(s)
+	tmpl, err := template.New("user-template").Funcs(
+		template.FuncMap{
+			"json": func(v interface{}) (string, error) {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			},
+		},
+	).Parse(s)
 	if err != nil {
 		return err
 	}
