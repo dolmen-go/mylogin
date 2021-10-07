@@ -20,7 +20,7 @@ import (
 type outputFormat interface {
 	Help() (string, string)
 	flag.Getter
-	Print(w io.Writer, login *mylogin.Login) error
+	Print(w io.Writer, section *mylogin.Section) error
 }
 
 type formatReplay bool
@@ -53,27 +53,27 @@ func (f *formatReplay) Get() interface{} {
 	return f
 }
 
-func (formatReplay) Print(w io.Writer, login *mylogin.Login) error {
+func (formatReplay) Print(w io.Writer, section *mylogin.Section) error {
 	args := make([]string, 5, 5+5*2)
 	args[0] = `mysql_config_editor`
 	args[1] = `set`
 	args[2] = `--skip-warn`
 	args[3] = `-G`
-	args[4] = flag.Arg(0)
-	if login.User != nil {
-		args = append(args, `-u`, *login.User)
+	args[4] = section.Name
+	if section.Login.User != nil {
+		args = append(args, `-u`, *section.Login.User)
 	}
-	if login.Password != nil {
+	if section.Login.Password != nil {
 		args = append(args, `-p`)
 	}
-	if login.Host != nil {
-		args = append(args, `-h`, *login.Host)
+	if section.Login.Host != nil {
+		args = append(args, `-h`, *section.Login.Host)
 	}
-	if login.Port != nil {
-		args = append(args, `-P`, *login.Port)
+	if section.Login.Port != nil {
+		args = append(args, `-P`, *section.Login.Port)
 	}
-	if login.Socket != nil {
-		args = append(args, `-S`, *login.Socket)
+	if section.Login.Socket != nil {
+		args = append(args, `-S`, *section.Login.Socket)
 	}
 	_, err := fmt.Fprintln(w, strings.Join(args, " "))
 	return err
@@ -132,11 +132,11 @@ func (f *formatJSON) Get() interface{} {
 	return f
 }
 
-func (formatJSON) Print(w io.Writer, login *mylogin.Login) error {
+func (formatJSON) Print(w io.Writer, section *mylogin.Section) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
-	return enc.Encode(loginAsMap(login))
+	return enc.Encode(loginAsMap(&section.Login))
 }
 
 type formatTemplate struct {
@@ -170,8 +170,8 @@ func (f *formatTemplate) Get() interface{} {
 	return f
 }
 
-func (f *formatTemplate) Print(w io.Writer, login *mylogin.Login) error {
-	err := f.tmpl.Execute(os.Stdout, loginAsMap(login))
+func (f *formatTemplate) Print(w io.Writer, section *mylogin.Section) error {
+	err := f.tmpl.Execute(os.Stdout, loginAsMap(&section.Login))
 	if err != nil {
 		return err
 	}
@@ -220,8 +220,8 @@ func main() {
 
 		if flag.NArg() != 0 {
 
-			for _, arg := range flag.Args() {
-				login, err := mylogin.ReadLogin(filename, []string{arg})
+			for _, name := range flag.Args() {
+				login, err := mylogin.ReadLogin(filename, []string{name})
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -229,7 +229,7 @@ func main() {
 					log.Fatal("section doesn't exists")
 				}
 
-				err = selectedFormat.Print(os.Stdout, login)
+				err = selectedFormat.Print(os.Stdout, &mylogin.Section{Name: name, Login: *login})
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -240,8 +240,8 @@ func main() {
 				log.Fatal(err)
 			}
 
-			for _, login := range sections {
-				err = selectedFormat.Print(os.Stdout, &login.Login)
+			for i := range sections {
+				err = selectedFormat.Print(os.Stdout, &sections[i])
 				if err != nil {
 					log.Fatal(err)
 				}
