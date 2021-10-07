@@ -10,24 +10,210 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/dolmen-go/mylogin"
 )
 
+type outputFormat interface {
+	Help() (string, string)
+	flag.Getter
+	Print(w io.Writer, login *mylogin.Login) error
+}
+
+type formatReplay bool
+
+func (formatReplay) Help() (string, string) {
+	return "replay", "mysql_config_editor commands format"
+}
+
+func (formatReplay) IsBoolFlag() bool {
+	return true
+}
+
+func (f *formatReplay) String() string {
+	return strconv.FormatBool(bool(*f))
+}
+
+func (f *formatReplay) Set(s string) error {
+	ok, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+	*f = formatReplay(ok)
+	return nil
+}
+
+func (f *formatReplay) Get() interface{} {
+	if !*f {
+		return nil
+	}
+	return f
+}
+
+func (formatReplay) Print(w io.Writer, login *mylogin.Login) error {
+	args := make([]string, 5, 5+5*2)
+	args[0] = `mysql_config_editor`
+	args[1] = `set`
+	args[2] = `--skip-warn`
+	args[3] = `-G`
+	args[4] = flag.Arg(0)
+	if login.User != nil {
+		args = append(args, `-u`, *login.User)
+	}
+	if login.Password != nil {
+		args = append(args, `-p`)
+	}
+	if login.Host != nil {
+		args = append(args, `-h`, *login.Host)
+	}
+	if login.Port != nil {
+		args = append(args, `-P`, *login.Port)
+	}
+	if login.Socket != nil {
+		args = append(args, `-S`, *login.Socket)
+	}
+	_, err := fmt.Fprintln(w, strings.Join(args, " "))
+	return err
+}
+
+func loginAsMap(login *mylogin.Login) map[string]interface{} {
+	// The login struct contains *string
+	// This is not convenient to use in templates
+	// So we remap it to a map, skipping nil values
+	m := make(map[string]interface{})
+	for _, x := range []struct {
+		key   string
+		value *string
+	}{
+		{"user", login.User},
+		{"password", login.Password},
+		{"host", login.Host},
+		{"socket", login.Socket},
+		{"port", login.Port},
+	} {
+		if x.value != nil {
+			m[x.key] = *x.value
+		}
+	}
+
+	return m
+}
+
+type formatJSON bool
+
+func (formatJSON) Help() (string, string) {
+	return "json", "JSON format"
+}
+
+func (formatJSON) IsBoolFlag() bool {
+	return true
+}
+
+func (f *formatJSON) String() string {
+	return strconv.FormatBool(bool(*f))
+}
+
+func (f *formatJSON) Set(s string) error {
+	ok, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+	*f = formatJSON(ok)
+	return nil
+}
+
+func (f *formatJSON) Get() interface{} {
+	if !*f {
+		return nil
+	}
+	return f
+}
+
+func (formatJSON) Print(w io.Writer, login *mylogin.Login) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	return enc.Encode(loginAsMap(login))
+}
+
+type formatTemplate struct {
+	tmpl *template.Template
+}
+
+func (formatTemplate) Help() (string, string) {
+	return "template", "text/template format"
+}
+
+func (f *formatTemplate) String() string {
+	if (*f).tmpl == nil {
+		return ""
+	}
+	return "<template>"
+}
+
+func (f *formatTemplate) Set(s string) error {
+	tmpl, err := template.New("user-template").Parse(s)
+	if err != nil {
+		return err
+	}
+	(*f).tmpl = tmpl
+	return nil
+}
+
+func (f *formatTemplate) Get() interface{} {
+	if f.tmpl == nil {
+		return nil
+	}
+	return f
+}
+
+func (f *formatTemplate) Print(w io.Writer, login *mylogin.Login) error {
+	err := f.tmpl.Execute(os.Stdout, loginAsMap(login))
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w)
+	return err
+}
+
 func main() {
 	var filename string
-	var formatJSON, formatReplay bool
-	var formatTemplate string
-
 	flag.StringVar(&filename, "file", mylogin.DefaultFile(), "mylogin.cnf path")
-	flag.BoolVar(&formatJSON, "json", false, "JSON format")
-	flag.BoolVar(&formatReplay, "replay", false, "mysql_config_editor commands format")
-	flag.StringVar(&formatTemplate, "template", "", "text/template format")
+	//var formatJSON, formatReplay bool
+	//var formatTemplate string
+
+	fmtReplay := formatReplay(false)
+	fmtJSON := formatJSON(false)
+	formats := []outputFormat{
+		&fmtReplay,
+		&fmtJSON,
+		&formatTemplate{},
+	}
+
+	for _, fmt := range formats {
+		name, usage := fmt.Help()
+		flag.Var(fmt, name, usage)
+	}
+
 	flag.Parse()
 
-	if formatJSON || formatReplay || formatTemplate != "" {
+	var selectedFormat outputFormat
+	for _, fmt := range formats {
+		f := fmt.Get()
+		if f == nil {
+			continue
+		}
+		if selectedFormat != nil {
+			flag.Usage()
+		}
+		selectedFormat = f.(outputFormat)
+	}
+
+	if selectedFormat != nil {
+
 		if flag.NArg() == 0 {
 			log.Fatal("missing section name")
 		}
@@ -39,65 +225,11 @@ func main() {
 			log.Fatal("section doesn't exists")
 		}
 
-		if formatReplay {
-			args := make([]string, 5, 5+5*2)
-			args[0] = `mysql_config_editor`
-			args[1] = `set`
-			args[2] = `--skip-warn`
-			args[3] = `-G`
-			args[4] = flag.Arg(0)
-			if login.User != nil {
-				args = append(args, `-u`, *login.User)
-			}
-			if login.Password != nil {
-				args = append(args, `-p`)
-			}
-			if login.Host != nil {
-				args = append(args, `-h`, *login.Host)
-			}
-			if login.Port != nil {
-				args = append(args, `-P`, *login.Port)
-			}
-			if login.Socket != nil {
-				args = append(args, `-S`, *login.Socket)
-			}
-			fmt.Println(strings.Join(args, " "))
-		} else {
-			// The login struct contains *string
-			// This is not convenient to use in templates
-			// So we remap it to a map, skipping nil values
-			m := make(map[string]interface{})
-			for _, x := range []struct {
-				key   string
-				value *string
-			}{
-				{"user", login.User},
-				{"password", login.Password},
-				{"host", login.Host},
-				{"socket", login.Socket},
-				{"port", login.Port},
-			} {
-				if x.value != nil {
-					m[x.key] = *x.value
-				}
-			}
-
-			if formatJSON {
-				enc := json.NewEncoder(os.Stdout)
-				enc.SetEscapeHTML(false)
-				enc.SetIndent("", "  ")
-				enc.Encode(m)
-			} else {
-				tmpl, err := template.New("user-template").Parse(formatTemplate)
-				if err != nil {
-					log.Fatal(err)
-				}
-				err = tmpl.Execute(os.Stdout, m)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+		err = selectedFormat.Print(os.Stdout, login)
+		if err != nil {
+			log.Fatal(err)
 		}
+
 	} else {
 		file, err := os.Open(filename)
 		if err != nil {
