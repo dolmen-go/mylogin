@@ -57,7 +57,7 @@ type formatReplay struct {
 }
 
 func (formatReplay) Help() (string, string) {
-	return "replay", "mysql_config_editor commands format"
+	return "replay", "mysql_config_editor 'set' command format (note: password is not exported)"
 }
 
 func (formatReplay) Print(w io.Writer, section *mylogin.Section) error {
@@ -83,6 +83,19 @@ func (formatReplay) Print(w io.Writer, section *mylogin.Section) error {
 		args = append(args, `-S`, *section.Login.Socket)
 	}
 	_, err := fmt.Fprintln(w, strings.Join(args, " "))
+	return err
+}
+
+type formatRemove struct {
+	outputFormatBool
+}
+
+func (formatRemove) Help() (string, string) {
+	return "remove", "mysql_config_editor 'remove' command format"
+}
+
+func (formatRemove) Print(w io.Writer, section *mylogin.Section) error {
+	_, err := fmt.Fprintln(w, "mysql_config_editor remove -G", section.Name)
 	return err
 }
 
@@ -170,6 +183,7 @@ func main() {
 
 	formats := []outputFormat{
 		&formatReplay{},
+		&formatRemove{},
 		&formatJSON{},
 		&formatTemplate{},
 	}
