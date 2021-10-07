@@ -127,7 +127,7 @@ type formatJSON struct {
 }
 
 func (formatJSON) Help() (string, string) {
-	return "json", "JSON format"
+	return "json", "JSON format (note: section name is not exported)"
 }
 
 func (formatJSON) Print(w io.Writer, section *mylogin.Section) error {
