@@ -201,15 +201,19 @@ func main() {
 	flag.Parse()
 
 	var selectedFormat outputFormat
-	for _, fmt := range formats {
-		f := fmt.Get()
+	for _, ft := range formats {
+		f := ft.Get()
 		if f == nil {
 			continue
 		}
 		if selectedFormat != nil {
+			h1, _ := ft.Help()
+			h2, _ := selectedFormat.Help()
+			fmt.Fprintf(os.Stderr, "options -%s and -%s are exclusive.\n", h1, h2)
 			flag.Usage()
+			os.Exit(1)
 		}
-		selectedFormat = f.(outputFormat)
+		selectedFormat = ft
 	}
 
 	if selectedFormat != nil {
