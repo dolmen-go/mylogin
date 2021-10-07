@@ -23,34 +23,41 @@ type outputFormat interface {
 	Print(w io.Writer, section *mylogin.Section) error
 }
 
-type formatReplay bool
-
-func (formatReplay) Help() (string, string) {
-	return "replay", "mysql_config_editor commands format"
+// outputFormatBool is an abstract base format for formats defined as a bool CLI flag.
+type outputFormatBool struct {
+	bool
 }
 
-func (formatReplay) IsBoolFlag() bool {
+func (outputFormatBool) IsBoolFlag() bool {
 	return true
 }
 
-func (f *formatReplay) String() string {
-	return strconv.FormatBool(bool(*f))
+func (f *outputFormatBool) String() string {
+	return strconv.FormatBool(f.bool)
 }
 
-func (f *formatReplay) Set(s string) error {
+func (f *outputFormatBool) Set(s string) error {
 	ok, err := strconv.ParseBool(s)
 	if err != nil {
 		return err
 	}
-	*f = formatReplay(ok)
+	f.bool = ok
 	return nil
 }
 
-func (f *formatReplay) Get() interface{} {
-	if !*f {
+func (f *outputFormatBool) Get() interface{} {
+	if !f.bool {
 		return nil
 	}
-	return f
+	return true
+}
+
+type formatReplay struct {
+	outputFormatBool
+}
+
+func (formatReplay) Help() (string, string) {
+	return "replay", "mysql_config_editor commands format"
 }
 
 func (formatReplay) Print(w io.Writer, section *mylogin.Section) error {
@@ -102,34 +109,12 @@ func loginAsMap(login *mylogin.Login) map[string]interface{} {
 	return m
 }
 
-type formatJSON bool
+type formatJSON struct {
+	outputFormatBool
+}
 
 func (formatJSON) Help() (string, string) {
 	return "json", "JSON format"
-}
-
-func (formatJSON) IsBoolFlag() bool {
-	return true
-}
-
-func (f *formatJSON) String() string {
-	return strconv.FormatBool(bool(*f))
-}
-
-func (f *formatJSON) Set(s string) error {
-	ok, err := strconv.ParseBool(s)
-	if err != nil {
-		return err
-	}
-	*f = formatJSON(ok)
-	return nil
-}
-
-func (f *formatJSON) Get() interface{} {
-	if !*f {
-		return nil
-	}
-	return f
 }
 
 func (formatJSON) Print(w io.Writer, section *mylogin.Section) error {
@@ -148,7 +133,7 @@ func (formatTemplate) Help() (string, string) {
 }
 
 func (f *formatTemplate) String() string {
-	if (*f).tmpl == nil {
+	if f.tmpl == nil {
 		return ""
 	}
 	return "<template>"
@@ -182,14 +167,10 @@ func (f *formatTemplate) Print(w io.Writer, section *mylogin.Section) error {
 func main() {
 	var filename string
 	flag.StringVar(&filename, "file", mylogin.DefaultFile(), "mylogin.cnf path")
-	//var formatJSON, formatReplay bool
-	//var formatTemplate string
 
-	fmtReplay := formatReplay(false)
-	fmtJSON := formatJSON(false)
 	formats := []outputFormat{
-		&fmtReplay,
-		&fmtJSON,
+		&formatReplay{},
+		&formatJSON{},
 		&formatTemplate{},
 	}
 
