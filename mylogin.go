@@ -3,7 +3,8 @@
 // See https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html
 //
 // Example:
-//   mysql_config_editor set --login-path=foo --user=bar -p
+//
+//	mysql_config_editor set --login-path=foo --user=bar -p
 //
 // For usage examples, see the utilies in the same repo.
 package mylogin
@@ -66,8 +67,10 @@ func NewKey(readRandom func([]byte) (int, error)) (Key, error) {
 }
 
 // DefaultFile returns the path to the default mylogin.cnf file:
-//   Windows: %APPDATA%/MySQL/.mylogin.cnf
-//   others: ~/.mylogin.cnf
+//
+//	Windows: %APPDATA%/MySQL/.mylogin.cnf
+//	others: ~/.mylogin.cnf
+//
 // If the environment variable MYSQL_TEST_LOGIN_FILE is set
 // that path is returned instead.
 func DefaultFile() string {
