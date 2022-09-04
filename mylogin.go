@@ -48,7 +48,7 @@ func (k *Key) cipher() cipher.Block {
 }
 
 // NewKey creates a new key from a source of random bytes.
-// See math/rand.Read() and crypto/rand.Read() as possible sources.
+// See [math/rand.Read] and [crypto/rand.Read] as possible sources.
 //
 // The generated key has the 3 high bits cleared so each byte is non-printable.
 func NewKey(readRandom func([]byte) (int, error)) (Key, error) {
