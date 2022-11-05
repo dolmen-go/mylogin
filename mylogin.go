@@ -1,6 +1,8 @@
 // Package mylogin reads and writes ~/.mylogin.cnf created by mysql_config_editor.
 //
-// See https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html
+// Reference documentation:
+//  - https://dev.mysql.com/doc/refman/8.0/en/mysql-config-editor.html
+//  - https://dev.mysql.com/doc/refman/8.0/en/option-file-options.html#option_general_login-path
 //
 // Example:
 //

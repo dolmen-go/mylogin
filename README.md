@@ -33,7 +33,7 @@ mylogin-dsn -h
 ## See also
 
 Package [`github.com/dolmen-go/mylogin-driver/register`](https://pkg.go.dev/github.com/dolmen-go/mylogin-driver/register)
-wraps [`github.com/go-sql-driver/mysql`](https://pkg.go.dev/github.com/go-sql-driver/mysql)
+wraps [`database/sql`](https://pkg.go.dev/database/sql) driver [`github.com/go-sql-driver/mysql`](https://pkg.go.dev/github.com/go-sql-driver/mysql)
 with an alternate connection string syntax that allows to refers to a `~/.mylogin.cnf` section.
 
 ## License
