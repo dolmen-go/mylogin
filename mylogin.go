@@ -233,12 +233,12 @@ func (d *decoder) Read(buf []byte) (n int, err error) {
 	if size < 0 || int(size) > len(d.chunk) || size%aes.BlockSize != 0 {
 		return 0, fmt.Errorf("invalid block size: %d", size)
 	}
-	n, err = d.input.Read(d.chunk[:size])
-	if n != int(size) {
-		if err == nil {
-			err = io.EOF
-		}
+	n, err = io.ReadFull(d.input, d.chunk[:size])
+	if err != nil {
 		return 0, err
+	}
+	if n != int(size) {
+		return 0, fmt.Errorf("invalid read size: got %d, expected %d", n, size)
 	}
 
 	blockCipher := d.key.cipher()
