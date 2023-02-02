@@ -180,7 +180,17 @@ func (f *formatTemplate) Get() interface{} {
 
 func (f *formatTemplate) Print(w io.Writer, section *mylogin.Section) error {
 	m := loginAsMap(&section.Login)
+
 	m["section"] = section.Name
+	// Export trucated section name to use with --defaults-group-suffix option of the MySQL CLI
+	const sectionSuffix = "groupSuffix"
+	switch {
+	case strings.HasPrefix(section.Name, "mysql"):
+		m[sectionSuffix] = section.Name[5:]
+	case strings.HasPrefix(section.Name, "client"):
+		m[sectionSuffix] = section.Name[6:]
+	}
+
 	err := f.tmpl.Execute(os.Stdout, m)
 	if err != nil {
 		return err
