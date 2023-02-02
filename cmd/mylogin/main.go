@@ -1,5 +1,18 @@
 // Command mylogin allows to dump the content of ~/.my.cnf.
-
+//
+// # Usage
+//
+//	mylogin [-file ~/.mylogin.cnf] [-replay | -remove | -json | -template=<template>] [<section> ...]
+//
+// # Template output
+//
+// See Go package [text/template] for the template syntax.
+//
+// The following function is defined in addition: `json`
+//
+// Examples:
+//
+//	mylogin '-template={{ json . }}{{ "\n" }}'
 package main
 
 import (
