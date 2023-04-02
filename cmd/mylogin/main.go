@@ -2,7 +2,7 @@
 //
 // # Usage
 //
-//	mylogin [-file ~/.mylogin.cnf] [-replay | -remove | -json | -template=<template>] [<section> ...]
+//	mylogin [-file ~/.mylogin.cnf] [-replay | -remove | -json | -template=<template> | -templateln=<template>] [<section> ...]
 //
 // # Template output
 //
@@ -12,7 +12,7 @@
 //
 // Examples:
 //
-//	mylogin '-template={{ json . }}{{ "\n" }}'
+//	mylogin '-templateln={{ json . }}'
 package main
 
 import (
@@ -212,6 +212,18 @@ func (f *formatTemplate) Print(w io.Writer, section *mylogin.Section) error {
 	return err
 }
 
+type formatTemplateLn struct {
+	formatTemplate
+}
+
+func (formatTemplateLn) Help() (string, string) {
+	return "templateln", "text/template format (additional function: 'json') with trailing line break"
+}
+
+func (f *formatTemplateLn) Set(s string) error {
+	return f.formatTemplate.Set(s + "\n")
+}
+
 func main() {
 	var filename string
 	flag.StringVar(&filename, "file", mylogin.DefaultFile(), "mylogin.cnf path")
@@ -221,6 +233,7 @@ func main() {
 		&formatRemove{},
 		&formatJSON{},
 		&formatTemplate{},
+		&formatTemplateLn{},
 	}
 
 	for _, fmt := range formats {
